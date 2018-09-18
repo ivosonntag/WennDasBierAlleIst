@@ -10,8 +10,7 @@ import json
 import os
 import time
 
-
-hashtag = 'bitcoin'
+hashtag = 'Messi'
 
 
 # configure logger
@@ -28,7 +27,7 @@ ACCESS_TOKEN_SECRET = os.getenv("ACCESS_TOKEN_SECRET")
 def data_file(tag):
     date_time = time.strftime("%Y-%m-%d")
     file_name = date_time + "_" + tag + ".json"
-    dir_name = os.path.join(os.path.dirname(os.path.dirname(__file__)), "../data/raw/")
+    dir_name = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data/raw/")
     path_to_file = dir_name + file_name
     return path_to_file
 
@@ -44,6 +43,7 @@ def determine_sentiment(tweet, plot=False):
                   "language": data["lang"],
                   "sentiment": sentiment,
                   "text": text}
+    # return data
     return tweet_info
 
 
@@ -90,3 +90,5 @@ if __name__ == '__main__':
     except ValueError as e:
         logger.error("failed to access twitter authentication - make sure to export credentials to environment, with "
                      "exception {}".format(e), exc_info=True)
+
+    api = tweepy.API(auth)
