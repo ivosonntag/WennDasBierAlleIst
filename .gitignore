@@ -1,2 +1,3 @@
 twitter/credentials
 twitter/data/*
+twitter/utils/__pycache__/
