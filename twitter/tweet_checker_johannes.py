@@ -3,10 +3,7 @@ import tweepy
 from tweepy import OAuthHandler
 
 
-CONSUMER_KEY="TWtqLUtoPwVXU0MQ5ePj2pZvT"
-CONSUMER_SECRET="noodzTUVc8VEpUFEZo4RgwL7abpdMpRVo9QhgXqTgixWeSQJU2"
-ACCESS_TOKEN="3581285302-j0r6tCTdO8Kfz8669nw8qCy0kLj4YApokRgp2RQ"
-ACCESS_TOKEN_SECRET="kBA1Bh3Hcithn3EB8T8CnosyucqGOsv48Ugpas4t6WePH"
+
 
 
 def check_tweet_status(tweet_id):
