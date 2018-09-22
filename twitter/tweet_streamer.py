@@ -79,6 +79,7 @@ class MyListener(StreamListener):
 
 
 if __name__ == '__main__':
+    print(CONSUMER_KEY)
     auth = OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
     auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 
