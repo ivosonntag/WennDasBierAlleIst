@@ -1,4 +1,5 @@
 from utils.log_conf import logging_dict
+from utils.data_storage import DataStorage
 import logging.config
 
 from tweepy import Stream
@@ -12,10 +13,10 @@ import time
 
 hashtag = 'Messi'
 
-
 # configure logger
 logging.config.dictConfig(logging_dict(logger_name="tvizzer", logging_level='DEBUG'))
 logger = logging.getLogger("tvizzer")
+log = True
 
 # make sure to export your credentials with `source credentials`
 CONSUMER_KEY = os.getenv("CONSUMER_KEY")
@@ -24,25 +25,28 @@ ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
 ACCESS_TOKEN_SECRET = os.getenv("ACCESS_TOKEN_SECRET")
 
 
-def data_file(tag):
-    date_time = time.strftime("%Y-%m-%d")
-    file_name = date_time + "_" + tag + ".json"
-    dir_name = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data/raw/")
-    path_to_file = dir_name + file_name
-    return path_to_file
-
-
-def determine_sentiment(tweet, plot=False):
+def format_tweet_data(tweet, plot=False):
     data = json.loads(tweet)
     # logger.debug("data: {} ".format(data))
-    text = data["text"]
+
+    # added to get the full text if status exceeds 140 characters
+    if "extended_tweet" in data:
+        text = data['extended_tweet']['full_text']
+    else:
+        text = data["text"]
+
     blob = textblob.TextBlob(text)
     sentiment = round(blob.sentiment.polarity, 2)
-    tweet_info = {"hashtag": hashtag,
+
+    # see https://github.com/ivosonntag/WennDasBierAlleIst/wiki/twitter for different keys
+    tweet_info = {"tweet_id" : data["id_str"],
+                  "user_id": data["user"]["id_str"],
+                  "hashtag": hashtag,
                   "time": time.strftime("%Y-%m-%d_%H:%M:%S"),
                   "language": data["lang"],
                   "sentiment": sentiment,
                   "text": text}
+
     # return data
     return tweet_info
 
@@ -58,13 +62,13 @@ def get_trends():
 class MyListener(StreamListener):
 
     def on_data(self, data):
+        # only gets called if new status was posted
+        # see StreamListener class for different events
         try:
-            with open(data_file(hashtag), 'a') as f:
-                tweet_info = determine_sentiment(data, plot=False)
-                logger.debug(tweet_info)
-                f.write(str(tweet_info) + "\n")
-                # time.sleep(1)
-                return True
+            tweet_info = format_tweet_data(data, plot=False)
+            if log: logger.debug(tweet_info)
+            storage.save(tweet_info)
+
         except BaseException as e:
             logger.error("Error on_data: {}".format(str(e)), exc_info=True)
         return True
@@ -78,11 +82,13 @@ if __name__ == '__main__':
     auth = OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
     auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 
+    storage = DataStorage(hashtag, 'file')
+
     api = tweepy.API(auth_handler=auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
     # logger.info("rate limit status: {}".format(api.rate_limit_status()))
 
     logger.info("current trends: {}".format(get_trends()))
-    logger.info("saving data with hashtag '{}' to file: '{}'".format(hashtag, data_file(hashtag)))
+    logger.info("saving data with hashtag '{}' to: '{}'".format(hashtag, storage.get_info()))
 
     twitter_stream = Stream(auth, MyListener())
     try:
