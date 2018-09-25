@@ -18,7 +18,7 @@ import logging.config
 global logger, config
 
 config = configparser.ConfigParser()
-config.read('tvizzer.conf')
+config.read('config.ini')
 
 
 def weighted(value):
@@ -57,13 +57,6 @@ def format_tweet_data(tweet):
             tweet_info[attribute] = sentiment
         else:
             tweet_info[attribute] = data[attribute]
-    # tweet_info = {"tweet_id" : data["id_str"],
-    #               "user_id": data["user"]["id_str"],
-    #               "hashtag": hashtag,
-    #               "time": time.strftime("%Y-%m-%d_%H:%M:%S"),
-    #               "language": data["lang"],
-    #               "sentiment": sentiment,
-    #               "text": text}
     return tweet_info
 
 
@@ -153,8 +146,6 @@ class MyListener(StreamListener):
 
 
 if __name__ == '__main__':
-    config = configparser.ConfigParser()
-    config.read('config.ini')
     console_output = config.get('MAIN', 'print_to_console')
 
     hashtag = config.get('TWITTER', 'hashtag')
