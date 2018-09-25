@@ -4,11 +4,11 @@ from utils.data_sql import DataSQL
 
 class DataStorage(object):
 
-    def __init__(self, hashtag, type):
+    def __init__(self, hashtag, config):
         # initialize specific storage type
-        if type == 'file':
+        if config.get('MAIN', 'store') == 'file':
             self.ptr = DataFile(hashtag)
-        elif type == 'sql':
+        elif config.get('MAIN', 'store') == 'sql':
             self.ptr = DataSQL(hashtag)
 
     def save(self, data):

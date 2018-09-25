@@ -7,7 +7,7 @@ class DataFile(object):
     def __init__(self, hashtag):
         date_time = time.strftime("%Y-%m-%d")
         file_name = date_time + "_" + hashtag + ".json"
-        dir_name = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data/raw/")
+        dir_name = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data/raw/")
         self.path_to_file = dir_name + file_name
 
     def save(self, data):

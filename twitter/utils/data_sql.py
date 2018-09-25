@@ -2,10 +2,11 @@ import sqlite3
 import os
 import time
 
+
 class DataSQL(object):
     def __init__(self, hashtag):
         # if database doesn't exist under this path it will be created
-        dir_name = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data/raw/")
+        dir_name = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data/raw/")
         file_name = 'twitter.sqlite'
         self.path_to_file = dir_name + file_name
         self.hashtag = hashtag
