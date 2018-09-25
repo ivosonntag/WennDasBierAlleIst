@@ -3,7 +3,6 @@ import logging.config
 
 import json
 import os
-import time
 import configparser
 import textblob
 
@@ -16,9 +15,10 @@ from utils.log_conf import logging_dict
 import logging.config
 
 
+global logger, config
+
 config = configparser.ConfigParser()
 config.read('tvizzer.conf')
-global logger, config
 
 
 def weighted(value):
@@ -28,10 +28,9 @@ def weighted(value):
         return value
 
 
-def format_tweet_data(tweet, plot=False):
+def format_tweet_data(tweet):
     sentiment = None
     data = json.loads(tweet)
-    # logger.debug("data: {} ".format(data))
 
     # added to get the full text if status exceeds 140 characters
     if "extended_tweet" in data:
@@ -43,13 +42,28 @@ def format_tweet_data(tweet, plot=False):
         sentiment = determine_sentiment(text)
 
     # see https://github.com/ivosonntag/WennDasBierAlleIst/wiki/twitter for different keys
-    tweet_info = {"tweet_id" : data["id_str"],
-                  "user_id": data["user"]["id_str"],
-                  "hashtag": hashtag,
-                  "time": time.strftime("%Y-%m-%d_%H:%M:%S"),
-                  "language": data["lang"],
-                  "sentiment": sentiment,
-                  "text": text}
+    desired_attributes = config.get('TWITTER', 'include_data').split(', ')
+    user_attributes = config.get('TWITTER', 'user_attributes').split(', ')
+    tweet_info = dict()
+    for attribute in desired_attributes:
+        if attribute == 'user':
+            user = dict()
+            for user_attribute in user_attributes:
+                user[user_attribute] = data['user'][user_attribute]
+            tweet_info['user'] = user
+        elif attribute == 'text':
+            tweet_info[attribute] = text
+        elif attribute == 'sentiment':
+            tweet_info[attribute] = sentiment
+        else:
+            tweet_info[attribute] = data[attribute]
+    # tweet_info = {"tweet_id" : data["id_str"],
+    #               "user_id": data["user"]["id_str"],
+    #               "hashtag": hashtag,
+    #               "time": time.strftime("%Y-%m-%d_%H:%M:%S"),
+    #               "language": data["lang"],
+    #               "sentiment": sentiment,
+    #               "text": text}
     return tweet_info
 
 
@@ -124,7 +138,7 @@ class MyListener(StreamListener):
         # only gets called if new status was posted
         # see StreamListener class for different events
         try:
-            tweet_info = format_tweet_data(data, plot=False)
+            tweet_info = format_tweet_data(data)
             if console_output:
                 logger.debug(tweet_info)
             storage.save(tweet_info)
@@ -140,7 +154,7 @@ class MyListener(StreamListener):
 
 if __name__ == '__main__':
     config = configparser.ConfigParser()
-    config.read('tvizzer.conf')
+    config.read('config.ini')
     console_output = config.get('MAIN', 'print_to_console')
 
     hashtag = config.get('TWITTER', 'hashtag')
@@ -158,8 +172,6 @@ if __name__ == '__main__':
     user_data = config.get("TWITTER", "user_attributes").split(', ')
     logger.debug("user_attribute: {}".format(user_data))
 
-    # logger.debug("Found config sections: {}".format(config.sections()))
-
     # make sure to export your credentials with `source credentials`
     CONSUMER_KEY = os.getenv("CONSUMER_KEY")
     CONSUMER_SECRET = os.getenv("CONSUMER_SECRET")
@@ -168,18 +180,13 @@ if __name__ == '__main__':
     auth = OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
     auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 
-    storage = DataStorage(hashtag, store, config)
+    storage = DataStorage(hashtag, config)
 
     api = tweepy.API(auth_handler=auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
-    # logger.info("rate limit status: {}".format(api.rate_limit_status()))
 
     if config.getboolean('TWITTER', 'use_most_trending'):
         hashtag = get_trends(get_location_woeid(country, town), only_one=True)
 
-    # logger.info("saving data with hashtag '{}' for location: {}-{} to file: '{}'"
-    #             .format(hashtag, country, town, data_file(hashtag)))
-
-    logger.info("current trends: {}".format(get_trends()))
     logger.info("saving data with hashtag '{}' to: '{}'".format(hashtag, storage.get_info()))
 
     twitter_stream = Stream(auth, MyListener())
