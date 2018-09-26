@@ -31,16 +31,13 @@ def weighted(value):
 def format_tweet_data(tweet):
     sentiment = None
     data = json.loads(tweet)
-
     # added to get the full text if status exceeds 140 characters
     if "extended_tweet" in data:
         text = data['extended_tweet']['full_text']
     else:
         text = data["text"]
-
     if config.getboolean('MAIN', 'sentiment'):
         sentiment = determine_sentiment(text)
-
     # see https://github.com/ivosonntag/WennDasBierAlleIst/wiki/twitter for different keys
     desired_attributes = config.get('TWITTER', 'include_data').split(', ')
     user_attributes = config.get('TWITTER', 'user_attributes').split(', ')
@@ -152,7 +149,6 @@ if __name__ == '__main__':
     country = config.get('TWITTER', 'country')
     town = config.get('TWITTER', 'town')
     store = config.get('MAIN', 'store')
-    print("store: ", store)
 
     # configure logger
     logging.config.dictConfig(logging_dict(logger_name="tvizzer", logging_level=config.get('MAIN', 'log_level')))
@@ -171,13 +167,12 @@ if __name__ == '__main__':
     auth = OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
     auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 
-    storage = DataStorage(hashtag, config)
-
     api = tweepy.API(auth_handler=auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
 
     if config.getboolean('TWITTER', 'use_most_trending'):
         hashtag = get_trends(get_location_woeid(country, town), only_one=True)
 
+    storage = DataStorage(hashtag, config)
     logger.info("saving data with hashtag '{}' to: '{}'".format(hashtag, storage.get_info()))
 
     twitter_stream = Stream(auth, MyListener())
