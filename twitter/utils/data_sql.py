@@ -24,7 +24,7 @@ class DataSQL(DataStorage):
     def save(self, data):
         conn = sqlite3.connect(self.__path_to_file)
         with conn:
-            query = "insert into {} (".format(self.__table_name)
+            query = "insert into '{}' (".format(self.__table_name)
             for key in self._list_of_keys:
                 query += "{},".format(key)
 
@@ -86,7 +86,7 @@ class DataSQL(DataStorage):
     def __create_table(self):
         # table doesn't get created if a table with the same name already exsits
 
-        query = "create table if not exists {} (".format(self.__table_name)
+        query = "create table if not exists '{}' (".format(self.__table_name)
         for key in self._list_of_keys:
             query += "'{}' Text,".format(key)
 
