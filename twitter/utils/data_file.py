@@ -1,10 +1,13 @@
 import time
 import os
+from utils.data_storage import DataStorage
 
+class DataFile(DataStorage):
 
-class DataFile(object):
+    def __init__(self, hashtag, config):
+        # in python calling base init method is optional
+        self._set_data(hashtag, config)
 
-    def __init__(self, hashtag):
         date_time = time.strftime("%Y-%m-%d")
         file_name = date_time + "_" + hashtag + ".json"
         dir_name = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data/raw/")

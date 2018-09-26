@@ -1,4 +1,4 @@
-from utils.data_storage import DataStorage
+from utils.data_storage import StorageFactory
 import logging.config
 
 import json
@@ -49,8 +49,13 @@ def format_tweet_data(tweet):
         if attribute == 'user':
             user = dict()
             for user_attribute in user_attributes:
-                user[user_attribute] = data['user'][user_attribute]
-            tweet_info['user'] = user
+                if user_attribute == 'id_str':
+                    user['user_id_str'] = data['user'][user_attribute]
+                else:
+                    user[user_attribute] = data['user'][user_attribute]
+            # tweet_info['user'] = user
+            # merge two dicts
+            tweet_info = {**tweet_info, **user}
         elif attribute == 'text':
             tweet_info[attribute] = text
         elif attribute == 'sentiment':
@@ -171,12 +176,12 @@ if __name__ == '__main__':
     auth = OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
     auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 
-    storage = DataStorage(hashtag, config)
-
     api = tweepy.API(auth_handler=auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
 
     if config.getboolean('TWITTER', 'use_most_trending'):
         hashtag = get_trends(get_location_woeid(country, town), only_one=True)
+
+    storage = StorageFactory.create(hashtag, config)
 
     logger.info("saving data with hashtag '{}' to: '{}'".format(hashtag, storage.get_info()))
 
