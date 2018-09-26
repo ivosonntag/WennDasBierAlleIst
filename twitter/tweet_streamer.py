@@ -31,16 +31,13 @@ def weighted(value):
 def format_tweet_data(tweet):
     sentiment = None
     data = json.loads(tweet)
-
     # added to get the full text if status exceeds 140 characters
     if "extended_tweet" in data:
         text = data['extended_tweet']['full_text']
     else:
         text = data["text"]
-
     if config.getboolean('MAIN', 'sentiment'):
         sentiment = determine_sentiment(text)
-
     # see https://github.com/ivosonntag/WennDasBierAlleIst/wiki/twitter for different keys
     desired_attributes = config.get('TWITTER', 'include_data').split(', ')
     user_attributes = config.get('TWITTER', 'user_attributes').split(', ')
@@ -157,7 +154,6 @@ if __name__ == '__main__':
     country = config.get('TWITTER', 'country')
     town = config.get('TWITTER', 'town')
     store = config.get('MAIN', 'store')
-    print("store: ", store)
 
     # configure logger
     logging.config.dictConfig(logging_dict(logger_name="tvizzer", logging_level=config.get('MAIN', 'log_level')))

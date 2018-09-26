@@ -1,3 +1,5 @@
-twitter/credentials
+twitter/credentials.txt
 twitter/data/*
 twitter/utils/__pycache__/
+.env*
+*.env
