@@ -9,6 +9,8 @@ import tweepy
 from tweepy.streaming import StreamListener
 from tweepy import Stream
 from tweepy import OAuthHandler
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+
 
 from utils.log_conf import logging_dict
 import logging.config
@@ -36,8 +38,8 @@ def format_tweet_data(tweet):
         text = data['extended_tweet']['full_text']
     else:
         text = data["text"]
-    if config.getboolean('MAIN', 'sentiment'):
-        sentiment = determine_sentiment(text)
+    if "sentiment" in config.get('TWITTER', 'include_data').split(', '):
+        sentiment = determine_vader(text)
     # see https://github.com/ivosonntag/WennDasBierAlleIst/wiki/twitter for different keys
     desired_attributes = config.get('TWITTER', 'include_data').split(', ')
     user_attributes = config.get('TWITTER', 'user_attributes').split(', ')
@@ -66,10 +68,10 @@ def format_tweet_data(tweet):
     return tweet_info
 
 
-def determine_sentiment(text):
-    blob = textblob.TextBlob(text)
-    sentiment = round(blob.sentiment.polarity, 3)
-    return sentiment
+def determine_vader(text):
+    vader = analyser.polarity_scores(text)
+    compound = vader["compound"]
+    return compound
 
 
 def get_trends(where_on_earth_id=1, only_one=False):
@@ -162,6 +164,7 @@ def count_substr_in_str(substr, theStr):
         i = j + 1
     return num
 
+
 class MyListener(StreamListener):
 
     def on_status(self, status):
@@ -212,6 +215,8 @@ if __name__ == '__main__':
     ACCESS_TOKEN_SECRET = os.getenv("ACCESS_TOKEN_SECRET")
     auth = OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
     auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
+
+    analyser = SentimentIntensityAnalyzer()
 
     api = tweepy.API(auth_handler=auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
 
