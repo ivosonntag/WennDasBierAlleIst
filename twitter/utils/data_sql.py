@@ -66,8 +66,8 @@ class DataSQL(DataStorage):
             tables = con.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
             for row in tables:
                 # if a table matches hashtag check columns
-                table_str = str(row[0])
-                if table_str.startswith(self._hashtag):
+                table_str = str(row[0]).lower()
+                if table_str.startswith(self._hashtag.lower()):
                     colums = con.execute("pragma table_info('{}')".format(table_str)).fetchall()
                     colum_names = [ seq[1] for seq in colums ]
                     # compare colum_names with list in config file
