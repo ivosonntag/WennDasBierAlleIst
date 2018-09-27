@@ -1,37 +1,21 @@
-from utils.data_storage import StorageFactory
 import logging.config
-
-import os
 import configparser
-import textblob
+import logging.config
 
 import tweepy
 from tweepy.streaming import StreamListener
 from tweepy import Stream
-from tweepy import OAuthHandler
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-
 
 from utils.log_conf import logging_dict
-import logging.config
+from utils.data_storage import StorageFactory
+from utils.helper_functions import authenticate, determine_vader, get_trends, get_location_woeid
 
 
 global logger, config
 
-config = configparser.ConfigParser()
-config.read('config.ini')
-
-
-def weighted(value):
-    if value is None:
-        return -float('inf')
-    else:
-        return value
-
 
 def format_tweet_data(tweet):
     sentiment = None
-    #data = json.loads(tweet)
     data = tweet._json
     # added to get the full text if status exceeds 140 characters
     if "extended_tweet" in data:
@@ -66,57 +50,6 @@ def format_tweet_data(tweet):
         else:
             tweet_info[attribute] = data[attribute]
     return tweet_info
-
-
-def determine_vader(text):
-    vader = analyser.polarity_scores(text)
-    compound = vader["compound"]
-    return compound
-
-
-def get_trends(where_on_earth_id=1, only_one=False):
-    logger.debug("getting trends for woeid: {}".format(where_on_earth_id))
-    trends = api.trends_place(where_on_earth_id)[0]
-    trends = trends["trends"]
-    all_hashtags = list()
-    for trend in trends:
-        tweet = dict()
-        tweet['tweet'] = trend['name']
-        tweet['tweet_volume'] = trend['tweet_volume']
-        all_hashtags.append(tweet)
-    sorted_hashtags = sorted(all_hashtags, key=lambda k: weighted(k['tweet_volume']), reverse=True)
-    if only_one:
-        hashtag = sorted_hashtags[0]["tweet"]
-    else:
-        hashtag = sorted_hashtags
-    return hashtag
-
-
-def get_location_woeid(country_str=None, town_str=None):
-    woeid = 1
-    found = False
-    if country_str:
-        if len(country_str) == 2:
-            country_str = country_str.upper()
-        else:
-            country_str = country_str.title()
-    list_with_dicts_of_locations = api.trends_available()
-    for location in list_with_dicts_of_locations:
-        if location['country'] == country_str:
-            woeid = location['woeid']
-            found = True
-        elif location['countryCode'] == country:
-            woeid = location['woeid']
-            found = True
-        elif location['name'] == town_str:
-            woeid = location['woeid']
-            found = True
-    if found:
-        return woeid
-    else:
-        logger.error("Could not find provided country or town, try the '-w' argument."
-                     "Will continue with woeid=1 which means global")
-        return woeid
 
 
 def filter_data(tweet, include_data, user_attributes):
@@ -191,38 +124,32 @@ class MyListener(StreamListener):
 
 
 if __name__ == '__main__':
-    console_output = config.get('MAIN', 'print_to_console')
+    config = configparser.ConfigParser()
+    config.read('config.ini')
 
+    # get config data
+    console_output = config.get('MAIN', 'print_to_console')
     hashtags = config.get('TWITTER', 'hashtag')
     hashtags_list = config.get('TWITTER', 'hashtag').split(', ')
     country = config.get('TWITTER', 'country')
     town = config.get('TWITTER', 'town')
     language = config.get('TWITTER', 'language')
     store = config.get('MAIN', 'store')
+    tweet_data = config.get("TWITTER", "include_data").split(', ')
+    user_data = config.get("TWITTER", "user_attributes").split(', ')
 
     # configure logger
-    logging.config.dictConfig(logging_dict(logger_name="tvizzer", logging_level=config.get('MAIN', 'log_level')))
-    logger = logging.getLogger("tvizzer")
+    logging.config.dictConfig(logging_dict(logging_level=config.get('MAIN', 'log_level')))
+    logger = logging.getLogger("streamer")
 
-    tweet_data = config.get("TWITTER", "include_data").split(', ')
     logger.debug("include data: {}".format(tweet_data))
-    user_data = config.get("TWITTER", "user_attributes").split(', ')
     logger.debug("user_attribute: {}".format(user_data))
 
-    # make sure to export your credentials with `source credentials`
-    CONSUMER_KEY = os.getenv("CONSUMER_KEY")
-    CONSUMER_SECRET = os.getenv("CONSUMER_SECRET")
-    ACCESS_TOKEN = os.getenv("ACCESS_TOKEN")
-    ACCESS_TOKEN_SECRET = os.getenv("ACCESS_TOKEN_SECRET")
-    auth = OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
-    auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
-
-    analyser = SentimentIntensityAnalyzer()
-
+    auth = authenticate()
     api = tweepy.API(auth_handler=auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
 
     if config.getboolean('TWITTER', 'use_most_trending'):
-        hashtags = get_trends(get_location_woeid(country, town), only_one=True)
+        hashtags = get_trends(api, get_location_woeid(api, country, town), only_one=True)
 
     storage = {}
     for hashtag in hashtags_list:

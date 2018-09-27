@@ -1,12 +1,16 @@
-# logging configuration
-def logging_dict(logger_name, logging_level):
+
+def logging_dict(logging_level):
     # decide whether logging parameters are default or not
     format_console = "%(asctime)s - %(name)s - %(levelname)s - [thread:%(threadName)s] - %(message)s"
     log_dict = {
         'version': 1,
         'disable_existing_loggers': False,   # set True to suppress existing loggers from other modules
         'loggers': {
-            'tvizzer': {
+            'streamer': {
+               'level': logging_level,
+               'handlers': ['console'],
+            },
+            'helper': {
                'level': logging_level,
                'handlers': ['console'],
             },
