@@ -197,6 +197,7 @@ if __name__ == '__main__':
     hashtags_list = config.get('TWITTER', 'hashtag').split(', ')
     country = config.get('TWITTER', 'country')
     town = config.get('TWITTER', 'town')
+    language = config.get('TWITTER', 'language')
     store = config.get('MAIN', 'store')
 
     # configure logger
@@ -230,7 +231,7 @@ if __name__ == '__main__':
 
     twitter_stream = Stream(auth, MyListener())
     try:
-        twitter_stream.filter(track=[hashtags], languages=["en"])
+        twitter_stream.filter(track=[hashtags], languages=[language])
     except ValueError as e:
         logger.error("failed to access twitter authentication - make sure to export credentials to environment, with "
                      "exception {}".format(e), exc_info=True)
