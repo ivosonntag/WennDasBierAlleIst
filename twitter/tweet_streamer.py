@@ -55,6 +55,10 @@ def format_tweet_data(tweet):
             tweet_info = {**tweet_info, **user}
         elif attribute == 'text':
             tweet_info[attribute] = text
+        elif attribute == 'place':
+            tweet_info[attribute] = data[attribute]
+            if tweet_info[attribute] is not None and 'full_name' in tweet_info[attribute]:
+                tweet_info[attribute] = data[attribute]['full_name']
         elif attribute == 'sentiment':
             tweet_info[attribute] = sentiment
         else:
