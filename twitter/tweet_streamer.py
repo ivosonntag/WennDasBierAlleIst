@@ -31,11 +31,12 @@ def weighted(value):
 
 def format_tweet_data(tweet):
     sentiment = None
-    #data = json.loads(tweet)
     data = tweet._json
     # added to get the full text if status exceeds 140 characters
     if "extended_tweet" in data:
         text = data['extended_tweet']['full_text']
+    elif 'retweeted_status' in data and "extended_tweet" in data['retweeted_status']:
+        text = data['retweeted_status']['extended_tweet']['full_text']
     else:
         text = data["text"]
     if "sentiment" in config.get('TWITTER', 'include_data').split(', '):
