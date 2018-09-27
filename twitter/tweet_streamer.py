@@ -1,7 +1,6 @@
 from utils.data_storage import StorageFactory
 import logging.config
 
-import json
 import os
 import configparser
 import textblob
@@ -30,7 +29,8 @@ def weighted(value):
 
 def format_tweet_data(tweet):
     sentiment = None
-    data = json.loads(tweet)
+    #data = json.loads(tweet)
+    data = tweet._json
     # added to get the full text if status exceeds 140 characters
     if "extended_tweet" in data:
         text = data['extended_tweet']['full_text']
@@ -127,16 +127,52 @@ def filter_data(tweet, include_data, user_attributes):
     return filtered_data
 
 
+def get_hashtag_of_tweet(tweet_info):
+    # since there is no function in MyListener for getting which hashtag triggered
+    # the callback function, we have have to look for it manually
+    # we count the occurrences of the different hasthags in the tweet text
+    if len(storage) == 1:
+        return list(storage.keys())[0]
+
+    cnt = 0
+    ht_max = ""
+    for ht in storage.keys():
+        tmp = count_substr_in_str(ht, tweet_info['text'])
+        if tmp > cnt:
+            ht_max = ht
+            cnt = tmp
+
+    if cnt== 0:
+        # raise Warning('Hashtag not detected')
+        return -1
+    return ht_max
+
+
+def count_substr_in_str(substr, theStr):
+    num = i = 0
+    while True:
+        j = theStr.lower().find(substr.lower(), i)
+        if j == -1:
+            break
+        num += 1
+        i = j + 1
+    return num
+
 class MyListener(StreamListener):
 
-    def on_data(self, data):
+    def on_status(self, status):
         # only gets called if new status was posted
         # see StreamListener class for different events
         try:
-            tweet_info = format_tweet_data(data)
-            if console_output:
-                logger.debug(tweet_info)
-            storage.save(tweet_info)
+            tweet_info = format_tweet_data(status)
+            hashtag = get_hashtag_of_tweet(tweet_info)
+            if hashtag != -1:
+                if console_output:
+                    logger.debug(tweet_info)
+                storage[hashtag].save(tweet_info)
+            else:
+                # for example if the retweetet tweet contained the hashtag or if the hashtag is in the user info
+                logger.info('Tweet without hashtag.')
 
         except BaseException as e:
             logger.error("Error on_data: {}".format(str(e)), exc_info=True)
@@ -150,7 +186,8 @@ class MyListener(StreamListener):
 if __name__ == '__main__':
     console_output = config.get('MAIN', 'print_to_console')
 
-    hashtag = config.get('TWITTER', 'hashtag')
+    hashtags = config.get('TWITTER', 'hashtag')
+    hashtags_list = config.get('TWITTER', 'hashtag').split(', ')
     country = config.get('TWITTER', 'country')
     town = config.get('TWITTER', 'town')
     store = config.get('MAIN', 'store')
@@ -175,15 +212,16 @@ if __name__ == '__main__':
     api = tweepy.API(auth_handler=auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
 
     if config.getboolean('TWITTER', 'use_most_trending'):
-        hashtag = get_trends(get_location_woeid(country, town), only_one=True)
+        hashtags = get_trends(get_location_woeid(country, town), only_one=True)
 
-    storage = StorageFactory.create(hashtag, config)
-
-    logger.info("saving data with hashtag '{}' to: '{}'".format(hashtag, storage.get_info()))
+    storage = {}
+    for hashtag in hashtags_list:
+        storage[hashtag] = StorageFactory.create(hashtag, config)
+        logger.info("saving data with hashtag '{}' to: '{}'".format(hashtag, storage[hashtag].get_info()))
 
     twitter_stream = Stream(auth, MyListener())
     try:
-        twitter_stream.filter(track=[hashtag], languages=["en"])
+        twitter_stream.filter(track=[hashtags], languages=["en"])
     except ValueError as e:
         logger.error("failed to access twitter authentication - make sure to export credentials to environment, with "
                      "exception {}".format(e), exc_info=True)
