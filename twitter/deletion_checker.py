@@ -1,4 +1,5 @@
 import os
+import time
 import configparser
 
 import tweepy
@@ -10,7 +11,7 @@ from utils.helper_functions import authenticate, create_db_connection, get_time,
 list_of_example_ids = [1045396895559020545, 1045396901397516293, 1014681067851128833]
 
 
-def get_tweet_ids(database):
+def get_tweet_ids_from_db(database):
     conn = create_db_connection(database)
 
     cur = conn.cursor()
@@ -38,8 +39,10 @@ def find_offline_ids(list_of_ids_to_check):
         return None
 
 
-def process_batch_limitation(batch_limitation, full_data):
-    pass
+def slice_data_into_batches(batch_limitation, full_data):
+    sliced_batch = full_data[:batch_limitation]
+    remainder_batch = full_data[batch_limitation:]
+    return sliced_batch, remainder_batch
 
 
 if __name__ == '__main__':
@@ -47,6 +50,7 @@ if __name__ == '__main__':
     config.read('config.ini')
     path_to_data = config.get('MAIN', 'path_to_data')
     db_name = config.get('MAIN', 'db_name')
+    batch_size = config.getint('DELETION', 'batch_size')
     log_level = config.get('MAIN', 'log_level')
 
     logger = build_logger("deletion-checker", log_level)
@@ -55,13 +59,19 @@ if __name__ == '__main__':
     api = tweepy.API(auth)
 
     path_to_db = os.path.join(path_to_data, db_name)
-    all_tweet_ids = get_tweet_ids(path_to_db)[:100]       # pick just a few for testing
+    # pick just a few for testing
+    all_tweet_ids = get_tweet_ids_from_db(path_to_db)   # returns a huge list of all tweet ids
 
-    logger.debug("list of ids: {}".format(all_tweet_ids))
-    logger.debug("len of list of tweet ids to check: {}".format(len(all_tweet_ids)))
+    # logger.debug("list of ids: {}".format(all_tweet_ids))
 
-    offline_tweets = find_offline_ids(all_tweet_ids)
-    logger.debug("number of offline tweets: {}".format(len(offline_tweets)))
-    logger.debug("offline tweets: {}".format(offline_tweets))
+    while True:
+        logger.debug("number of tweet ids to check: {}".format(len(all_tweet_ids)))
 
+        batch, remainder = slice_data_into_batches(batch_size, all_tweet_ids)
+        all_tweet_ids = remainder
+
+        offline_tweets = find_offline_ids(batch)
+
+        logger.debug("number of offline tweets: {}".format(len(offline_tweets)))
+        logger.info("offline tweet ids: {}".format(offline_tweets))
 
