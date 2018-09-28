@@ -1,5 +1,10 @@
 import logging
 import os
+import sqlite3
+import datetime
+import logging.config
+
+from utils.log_conf import logging_dict
 
 from tweepy import OAuthHandler
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
@@ -76,3 +81,29 @@ def get_location_woeid(api, country_str=None, town_str=None):
         logger.error("Could not find provided country or town, try the '-w' argument."
                      "Will continue with woeid=1 which means global")
         return woeid
+
+
+def create_db_connection(db_file):
+    """ create a database connection to the SQLite database
+            specified by the db_file
+        :param db_file: database file
+        :return: Connection object or None
+        """
+    try:
+        conn = sqlite3.connect(db_file)
+        return conn
+    except Exception as e:
+        logger.error("failed to establish connection to db: {}".format(db_file))
+    return None
+
+
+def get_time():
+    now = datetime.datetime.now()
+    return now
+
+
+def build_logger(logger_name, logging_level):
+    # configure logger
+    logging.config.dictConfig(logging_dict(logging_level=logging_level))
+    log = logging.getLogger(logger_name)
+    return log

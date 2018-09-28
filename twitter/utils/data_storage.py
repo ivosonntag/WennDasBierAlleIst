@@ -1,5 +1,9 @@
 import abc
 
+from utils.data_file import DataFile
+from utils.data_sql import DataSQL
+
+
 class DataStorage(object, metaclass=abc.ABCMeta):
     """Abstract Class for data storage.
        Do not create an object of this class!
@@ -24,11 +28,9 @@ class DataStorage(object, metaclass=abc.ABCMeta):
         self._list_of_keys = config.get('TWITTER', 'include_data').split(', ')
         del self._list_of_keys[self._list_of_keys.index('user')]
         temp = config.get('TWITTER', 'user_attributes').split(', ')
-        temp = ['user_id_str' if x=='id_str' else x for x in temp]
+        temp = ['user_id_str' if x == 'id_str' else x for x in temp]
         self._list_of_keys = sorted(self._list_of_keys + temp)
 
-from utils.data_file import DataFile
-from utils.data_sql import DataSQL
 
 class StorageFactory(object):
     """ Factory Method Pattern

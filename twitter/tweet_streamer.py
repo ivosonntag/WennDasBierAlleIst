@@ -1,14 +1,11 @@
-import logging.config
 import configparser
-import logging.config
 
 import tweepy
 from tweepy.streaming import StreamListener
 from tweepy import Stream
 
-from utils.log_conf import logging_dict
 from utils.data_storage import StorageFactory
-from utils.helper_functions import authenticate, determine_vader, get_trends, get_location_woeid
+from utils.helper_functions import authenticate, determine_vader, get_trends, get_location_woeid, build_logger
 
 
 global logger, config
@@ -139,10 +136,9 @@ if __name__ == '__main__':
     store = config.get('MAIN', 'store')
     tweet_data = config.get("TWITTER", "include_data").split(', ')
     user_data = config.get("TWITTER", "user_attributes").split(', ')
+    log_level = config.get('MAIN', 'log_level')
 
-    # configure logger
-    logging.config.dictConfig(logging_dict(logging_level=config.get('MAIN', 'log_level')))
-    logger = logging.getLogger("streamer")
+    logger = build_logger('streamer', log_level)
 
     logger.debug("include data: {}".format(tweet_data))
     logger.debug("user_attribute: {}".format(user_data))

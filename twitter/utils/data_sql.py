@@ -1,8 +1,7 @@
-import sqlite3
 import os
-import time
 
 from utils.data_storage import DataStorage
+from utils.helper_functions import create_db_connection
 
 
 class DataSQL(DataStorage):
@@ -14,15 +13,14 @@ class DataSQL(DataStorage):
 
         # if database doesn't exist under this path it will be created automatically
         dir_name = os.path.join(os.path.dirname(os.path.dirname(__file__)), self._path)
-        database_name = 'twitter.sqlite'
+        database_name = config.get('MAIN', 'db_name')
         self.__path_to_file = dir_name + database_name
 
         self.__table_name = self.__check_if_exakt_table_with_hashtag_as_name_exists()
         self.__create_table()
 
-
     def save(self, data):
-        conn = sqlite3.connect(self.__path_to_file)
+        conn = create_db_connection(self.__path_to_file)
         with conn:
             query = "insert into '{}' (".format(self.__table_name)
             for key in self._list_of_keys:
@@ -59,7 +57,7 @@ class DataSQL(DataStorage):
     def __check_if_exakt_table_with_hashtag_as_name_exists(self):
         # if yes return the table name
         # if no return the new table name
-        con = sqlite3.connect(self.__path_to_file)
+        con = create_db_connection(self.__path_to_file)
         with con:
             # get all tables
             nr = 0
@@ -69,7 +67,7 @@ class DataSQL(DataStorage):
                 table_str = str(row[0]).lower()
                 if table_str.startswith(self._hashtag.lower()):
                     colums = con.execute("pragma table_info('{}')".format(table_str)).fetchall()
-                    colum_names = [ seq[1] for seq in colums ]
+                    colum_names = [seq[1] for seq in colums]
                     # compare colum_names with list in config file
                     if sorted(colum_names) == self._list_of_keys:
                         return table_str
@@ -81,10 +79,8 @@ class DataSQL(DataStorage):
                         nr += 1
             return self._hashtag + '_' + str(nr)
 
-
-
     def __create_table(self):
-        # table doesn't get created if a table with the same name already exsits
+        # table doesn't get created if a table with the same name already exists
 
         query = "create table if not exists '{}' (".format(self.__table_name)
         for key in self._list_of_keys:
@@ -94,7 +90,7 @@ class DataSQL(DataStorage):
         query = query[:-1]
         query += ");"
 
-        con = sqlite3.connect(self.__path_to_file)
+        con = create_db_connection(self.__path_to_file)
         with con:
             con.execute(query)
 

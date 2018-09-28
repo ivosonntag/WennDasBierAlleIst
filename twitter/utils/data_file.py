@@ -2,6 +2,7 @@ import time
 import os
 from utils.data_storage import DataStorage
 
+
 class DataFile(DataStorage):
 
     def __init__(self, hashtag, config):
@@ -19,4 +20,3 @@ class DataFile(DataStorage):
 
     def get_info(self):
         return self.path_to_file
-

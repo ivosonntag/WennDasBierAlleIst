@@ -14,6 +14,18 @@ def logging_dict(logging_level):
                'level': logging_level,
                'handlers': ['console'],
             },
+            'data-sql': {
+               'level': logging_level,
+               'handlers': ['console'],
+            },
+            'data-file': {
+               'level': logging_level,
+               'handlers': ['console'],
+            },
+            'deletion-checker': {
+               'level': logging_level,
+               'handlers': ['console'],
+            },
         },
         'formatters': {
             # install colored logs with 'pip install coloredlogs'
