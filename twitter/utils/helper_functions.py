@@ -1,8 +1,10 @@
+import time
 import logging
 import os
 import sqlite3
 import datetime
 import logging.config
+import json
 
 from utils.log_conf import logging_dict
 
@@ -98,8 +100,20 @@ def create_db_connection(db_file):
 
 
 def get_time():
-    now = datetime.datetime.now()
-    return now
+    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return str(now)
+
+
+def convert_twitter_time(twitter_time):
+    in_seconds = time.mktime(time.strptime(twitter_time, "%a %b %d %H:%M:%S +0000 %Y"))
+    return str(datetime.datetime.fromtimestamp(in_seconds))
+
+
+def get_most_recent_time(first_time, second_time):
+    if first_time > second_time:
+        return first_time
+    else:
+        return second_time
 
 
 def build_logger(logger_name, logging_level):
@@ -107,3 +121,13 @@ def build_logger(logger_name, logging_level):
     logging.config.dictConfig(logging_dict(logging_level=logging_level))
     log = logging.getLogger(logger_name)
     return log
+
+
+def save_as_json_file(path_to_file, payload):
+    with open(path_to_file, 'w') as file:
+        json.dump(payload, file)
+
+
+def load_json(path_to_file):
+    with open(path_to_file, 'r') as fp:
+        return json.load(fp)
