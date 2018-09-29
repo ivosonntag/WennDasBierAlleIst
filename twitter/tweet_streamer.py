@@ -107,11 +107,11 @@ class MyListener(StreamListener):
             hashtag = get_hashtag_of_tweet(tweet_info)
             if hashtag != -1:
                 if console_output:
-                    logger.debug(tweet_info)
+                    logger.info(tweet_info)
                 storage[hashtag].save(tweet_info)
             else:
                 # for example if the retweetet tweet contained the hashtag or if the hashtag is in the user info
-                logger.info('Tweet without hashtag.')
+                logger.debug('Tweet without hashtag.')
 
         except BaseException as e:
             logger.error("Error on_data: {}".format(str(e)), exc_info=True)

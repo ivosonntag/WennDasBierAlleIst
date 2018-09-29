@@ -131,3 +131,27 @@ def save_as_json_file(path_to_file, payload):
 def load_json(path_to_file):
     with open(path_to_file, 'r') as fp:
         return json.load(fp)
+
+
+def update_data_file(file_list, new_list):
+    to_remove = []
+    for m, recent_tweet in enumerate(new_list):
+        for file_tweet in file_list:
+            if recent_tweet['tweet_id'] == file_tweet['tweet_id']:
+                if recent_tweet['status'] == 'offline':
+                    # updating status attribute to offline
+                    file_tweet["status"] = 'offline'
+                else:
+                    # recently checked tweet is still online, update last_seen attribute
+                    file_tweet['last_seen'] = recent_tweet['last_seen']
+                to_remove.append(m)
+
+    # remove tweets in new_list, which have been updated in the file_list already
+    for i in reversed(range(len(to_remove))):
+        del new_list[i]
+
+    # add remaining tweets in new_list to file_list, since they are not there yet
+    for t in new_list:
+        file_list.append(t)
+
+    return file_list
