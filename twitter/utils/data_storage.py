@@ -1,8 +1,5 @@
 import abc
 
-from utils.data_file import DataFile
-from utils.data_sql import DataSQL
-
 
 class DataStorage(object, metaclass=abc.ABCMeta):
     """Abstract Class for data storage.
@@ -30,6 +27,10 @@ class DataStorage(object, metaclass=abc.ABCMeta):
         temp = config.get('TWITTER', 'user_attributes').split(', ')
         temp = ['user_id_str' if x == 'id_str' else x for x in temp]
         self._list_of_keys = sorted(self._list_of_keys + temp)
+
+
+from utils.data_file import DataFile
+from utils.data_sql import DataSQL
 
 
 class StorageFactory(object):
