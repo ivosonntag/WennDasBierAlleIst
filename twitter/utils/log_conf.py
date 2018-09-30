@@ -30,6 +30,10 @@ def logging_dict(logging_level):
                'level': logging_level,
                'handlers': ['console'],
             },
+            'vizualize': {
+               'level': logging_level,
+               'handlers': ['console'],
+            },
         },
         'formatters': {
             # install colored logs with 'pip install coloredlogs'

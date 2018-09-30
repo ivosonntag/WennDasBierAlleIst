@@ -3,6 +3,7 @@ chardet==3.0.4
 coloredlogs==10.0
 humanfriendly==4.16.1
 idna==2.7
+matplotlib==3.0.0
 nltk==3.3
 oauthlib==2.1.0
 pandas==0.23.4

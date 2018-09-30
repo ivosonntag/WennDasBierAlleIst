@@ -122,12 +122,12 @@ class MyListener(StreamListener):
                 # for example if the retweetet tweet contained the hashtag or if the hashtag is in the user info
                 logger.debug('Tweet without hashtag.')
 
-        except BaseException as e:
+        except Exception as e:
             logger.error("Error on_data: {}".format(str(e)), exc_info=True)
         return True
 
     def on_error(self, status):
-        logger.warning(status)
+        logger.warning("Error: ".format(status))
         return True
 
 
