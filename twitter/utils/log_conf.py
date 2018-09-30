@@ -22,6 +22,10 @@ def logging_dict(logging_level):
                'level': logging_level,
                'handlers': ['console'],
             },
+            'data-frame': {
+               'level': logging_level,
+               'handlers': ['console'],
+            },
             'deletion-checker': {
                'level': logging_level,
                'handlers': ['console'],

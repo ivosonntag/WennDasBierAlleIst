@@ -5,7 +5,12 @@ from tweepy.streaming import StreamListener
 from tweepy import Stream
 
 from utils.data_storage import StorageFactory
-from utils.helper_functions import authenticate, determine_vader, get_trends, get_location_woeid, build_logger
+from utils.helper_functions import authenticate,\
+    determine_vader,\
+    get_trends,\
+    get_location_woeid,\
+    build_logger,\
+    convert_twitter_time
 
 
 global logger, config
@@ -44,6 +49,8 @@ def format_tweet_data(tweet):
             tweet_info[attribute] = data[attribute]
             if tweet_info[attribute] is not None and 'full_name' in tweet_info[attribute]:
                 tweet_info[attribute] = data[attribute]['full_name']
+        elif attribute == 'created_at':
+            tweet_info[attribute] = convert_twitter_time(data[attribute])
         elif attribute == 'sentiment':
             tweet_info[attribute] = sentiment
         else:
@@ -60,6 +67,8 @@ def filter_data(tweet, include_data, user_attributes):
             for user_attribute in user_attributes:
                 user[user_attribute] = tweet['user'][user_attribute]
             filtered_data['user'] = user
+        elif attribute == 'created_at':
+            filtered_data[attribute] = convert_twitter_time(tweet[attribute])
         else:
             filtered_data[attribute] = tweet[attribute]
     return filtered_data
@@ -67,8 +76,8 @@ def filter_data(tweet, include_data, user_attributes):
 
 def get_hashtag_of_tweet(tweet_info):
     # since there is no function in MyListener for getting which hashtag triggered
-    # the callback function, we have have to look for it manually
-    # we count the occurrences of the different hasthags in the tweet text
+    # the callback function, we have to look for it manually we count the occurrences
+    # of the different hashtags in the tweet text
     if len(storage) == 1:
         return list(storage.keys())[0]
 
@@ -80,7 +89,7 @@ def get_hashtag_of_tweet(tweet_info):
             ht_max = ht
             cnt = tmp
 
-    if cnt== 0:
+    if cnt == 0:
         # raise Warning('Hashtag not detected')
         return -1
     return ht_max
@@ -127,7 +136,7 @@ if __name__ == '__main__':
     config.read('config.ini')
 
     # get config data
-    console_output = config.get('MAIN', 'print_to_console')
+    console_output = config.getboolean('MAIN', 'print_to_console')
     hashtags = config.get('TWITTER', 'hashtag')
     hashtags_list = config.get('TWITTER', 'hashtag').split(', ')
     country = config.get('TWITTER', 'country')

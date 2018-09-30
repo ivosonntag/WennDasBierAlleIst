@@ -1,4 +1,5 @@
 import os
+import time
 
 from utils.data_storage import DataStorage
 from utils.helper_functions import create_db_connection
@@ -13,8 +14,8 @@ class DataSQL(DataStorage):
 
         # if database doesn't exist under this path it will be created automatically
         dir_name = os.path.join(os.path.dirname(os.path.dirname(__file__)), self._path)
-        database_name = config.get('MAIN', 'db_name')
-        self.__path_to_file = dir_name + database_name
+        date_time = time.strftime("%Y-%m-%d")
+        self.__path_to_file = dir_name + date_time + "_" + hashtag + ".db"
 
         self.__table_name = self.__check_if_exakt_table_with_hashtag_as_name_exists()
         self.__create_table()

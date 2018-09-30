@@ -11,7 +11,7 @@ class DataFile(DataStorage):
 
         date_time = time.strftime("%Y-%m-%d")
         file_name = date_time + "_" + hashtag + ".json"
-        dir_name = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data/raw/")
+        dir_name = os.path.join(os.path.dirname(os.path.dirname(__file__)), config.get('MAIN', 'path_to_data'))
         self.path_to_file = dir_name + file_name
 
     def save(self, data):

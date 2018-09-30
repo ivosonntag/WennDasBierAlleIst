@@ -31,7 +31,7 @@ class DataStorage(object, metaclass=abc.ABCMeta):
 
 from utils.data_file import DataFile
 from utils.data_sql import DataSQL
-
+from utils.data_frame import DataFrame
 
 class StorageFactory(object):
     """ Factory Method Pattern
@@ -42,6 +42,8 @@ class StorageFactory(object):
             return DataFile(hashtag, config)
         elif config.get('MAIN', 'store') == 'sql':
             return DataSQL(hashtag, config)
+        elif config.get('MAIN', 'store') == 'pandas':
+            return DataFrame(hashtag, config)
 
 
 
