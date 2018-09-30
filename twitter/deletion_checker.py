@@ -123,7 +123,7 @@ if __name__ == '__main__':
         # if id is offline -> update status to offline
         # if id is still online -> update last_seen to recent date
         # if id is not in file already, add tweet dict to file
-        logger.debug("now merging data into {}".format(full_path_to_file))
+        logger.info("now updating data into {}".format(full_path_to_file))
         status_tweet_list = update_data_file(status_tweet_file, status_tweet_list)
 
     # in the end save the list with dicts to the loaded / new file
