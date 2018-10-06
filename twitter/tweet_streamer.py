@@ -36,13 +36,13 @@ def format_tweet_data(tweet):
         if attribute == 'user':
             user = dict()
             for user_attribute in user_attributes:
-                if user_attribute == 'id_str':
-                    user['user_id_str'] = data['user'][user_attribute]
-                else:
-                    user[user_attribute] = data['user'][user_attribute]
-            # tweet_info['user'] = user
+                # if user_attribute == 'id_str':
+                #    user['user_id_str'] = data['user'][user_attribute]
+                # else:
+                user[user_attribute] = data['user'][user_attribute]
+            tweet_info['user'] = user
             # merge two dicts
-            tweet_info = {**tweet_info, **user}
+            # tweet_info = {**tweet_info, **user}
         elif attribute == 'text':
             tweet_info[attribute] = text
         elif attribute == 'place':
@@ -76,8 +76,8 @@ def filter_data(tweet, include_data, user_attributes):
 
 def get_hashtag_of_tweet(tweet_info):
     # since there is no function in MyListener for getting which hashtag triggered
-    # the callback function, we have to look for it manually we count the occurrences
-    # of the different hashtags in the tweet text
+    # the callback function, we have to look for it manually, therefore we count the occurrences
+    # of the hashtags in the tweet text
     if len(storage) == 1:
         return list(storage.keys())[0]
 
@@ -90,7 +90,6 @@ def get_hashtag_of_tweet(tweet_info):
             cnt = tmp
 
     if cnt == 0:
-        # raise Warning('Hashtag not detected')
         return -1
     return ht_max
 
@@ -117,10 +116,11 @@ class MyListener(StreamListener):
             if hashtag != -1:
                 if console_output:
                     logger.info(tweet_info)
-                storage[hashtag].save(tweet_info)
+                storage[hashtag].save(tweet_info, hashtag)
             else:
                 # for example if the retweetet tweet contained the hashtag or if the hashtag is in the user info
-                logger.debug('Tweet without hashtag.')
+                if console_output:
+                    logger.debug('Tweet without hashtag.')
 
         except Exception as e:
             logger.error("Error on_data: {}".format(str(e)), exc_info=True)
@@ -160,7 +160,7 @@ if __name__ == '__main__':
 
     storage = {}
     for hashtag in hashtags_list:
-        storage[hashtag] = StorageFactory.create(hashtag, config)
+        storage[hashtag] = StorageFactory.create(config)
         logger.info("saving data with hashtag '{}' to: '{}'".format(hashtag, storage[hashtag].get_info()))
 
     twitter_stream = Stream(auth, MyListener())

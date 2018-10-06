@@ -10,7 +10,7 @@ class DataStorage(object, metaclass=abc.ABCMeta):
         raise NotImplementedError('not defined')
 
     @abc.abstractmethod
-    def save(self, data):
+    def save(self, data, hashtag):
         # get information were the data is saved
         raise NotImplementedError('not defined')
 
@@ -19,31 +19,27 @@ class DataStorage(object, metaclass=abc.ABCMeta):
         # get information were the data is saved
         raise NotImplementedError('not defined')
 
-    def _set_data(self, hashtag, config):
-        self._hashtag = hashtag
+    def _set_data(self, config):
         self._path = config.get('MAIN', 'path_to_data')
-        self._list_of_keys = config.get('TWITTER', 'include_data').split(', ')
-        del self._list_of_keys[self._list_of_keys.index('user')]
-        temp = config.get('TWITTER', 'user_attributes').split(', ')
-        temp = ['user_id_str' if x == 'id_str' else x for x in temp]
-        self._list_of_keys = sorted(self._list_of_keys + temp)
 
 
 from utils.data_file import DataFile
 from utils.data_sql import DataSQL
 from utils.data_frame import DataFrame
 
+
 class StorageFactory(object):
     """ Factory Method Pattern
     """
     @staticmethod
-    def create(hashtag, config):
+    def create(config):
         if config.get('MAIN', 'store') == 'file':
-            return DataFile(hashtag, config)
+            return DataFile(config)
         elif config.get('MAIN', 'store') == 'sql':
-            return DataSQL(hashtag, config)
+            return DataSQL(config)
         elif config.get('MAIN', 'store') == 'pandas':
-            return DataFrame(hashtag, config)
+            return DataFrame(config)
+
 
 
 

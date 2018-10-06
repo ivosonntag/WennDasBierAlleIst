@@ -92,8 +92,7 @@ def create_db_connection(db_file):
         :return: Connection object or None
         """
     try:
-        conn = sqlite3.connect(db_file)
-        return conn
+        return sqlite3.connect(db_file)
     except Exception as e:
         logger.error("failed to establish connection to db: {}".format(db_file))
     return None
