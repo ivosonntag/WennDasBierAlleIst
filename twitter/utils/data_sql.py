@@ -7,16 +7,22 @@ class DataSQL(DataStorage):
     """
 
     def __init__(self, config):
-        self._set_data(config)
-        # if database doesn't exist under this path it will be created automatically
-        self.__path_to_file = self._path + "twitter.sqlite"
-        self.__dict2sql = Dict2Sql(self.__path_to_file)
+        super().__init__(config, config.get('SQL', 'db_name'))
+        self.__dict2sql = Dict2Sql(self._path_to_file)
+        self.__table_name = ""
+        if self._store_together:
+            self.__table_name = "All_Tweets"
 
-    def save(self, data, hashtag):
-        self.__dict2sql.save(data, hashtag, True, True)
+    def save(self, data, table_name):
+        if not self._store_together:
+            self.__table_name = table_name
+        self.__dict2sql.save(data, table_name, True, True)
 
     def get_info(self):
-        return self.__path_to_file
+        tmp_str = "Database: " + self._path_to_file
+        if self.__table_name is not "":
+            tmp_str += " | Table: " + self.__table_name
+        return tmp_str
 
 
 

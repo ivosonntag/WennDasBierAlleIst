@@ -6,21 +6,20 @@ class DataStorage(object, metaclass=abc.ABCMeta):
        Do not create an object of this class!
     """
     @abc.abstractmethod
-    def __init__(self):
-        raise NotImplementedError('not defined')
+    def __init__(self, config, filename):
+        self._path = config.get('MAIN', 'path_to_data')
+        self._path_to_file = self._path + filename
+        self._store_together = bool(config.getboolean('MAIN', 'store_together'))
 
     @abc.abstractmethod
     def save(self, data, hashtag):
-        # get information were the data is saved
+        # save data
         raise NotImplementedError('not defined')
 
     @abc.abstractmethod
     def get_info(self):
         # get information were the data is saved
         raise NotImplementedError('not defined')
-
-    def _set_data(self, config):
-        self._path = config.get('MAIN', 'path_to_data')
 
 
 from utils.data_file import DataFile
@@ -33,11 +32,11 @@ class StorageFactory(object):
     """
     @staticmethod
     def create(config):
-        if config.get('MAIN', 'store') == 'file':
+        if config.get('MAIN', 'store_type') == 'file':
             return DataFile(config)
-        elif config.get('MAIN', 'store') == 'sql':
+        elif config.get('MAIN', 'store_type') == 'sql':
             return DataSQL(config)
-        elif config.get('MAIN', 'store') == 'pandas':
+        elif config.get('MAIN', 'store_type') == 'pandas':
             return DataFrame(config)
 
 

@@ -142,7 +142,6 @@ if __name__ == '__main__':
     country = config.get('TWITTER', 'country')
     town = config.get('TWITTER', 'town')
     language = config.get('TWITTER', 'language')
-    store = config.get('MAIN', 'store')
     tweet_data = config.get("TWITTER", "include_data").split(', ')
     user_data = config.get("TWITTER", "user_attributes").split(', ')
     log_level = config.get('MAIN', 'log_level')
