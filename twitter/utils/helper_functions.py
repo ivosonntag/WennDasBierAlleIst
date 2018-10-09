@@ -5,6 +5,8 @@ import sqlite3
 import datetime
 import logging.config
 import json
+import matplotlib.pyplot as plt
+
 
 from utils.log_conf import logging_dict
 
@@ -154,3 +156,17 @@ def update_data_file(file_list, new_list):
         file_list.append(t)
 
     return file_list
+
+#
+# text = 'all your base are belong to us all of your base base base'
+#
+# def generate_wordcloud(text): # optionally add: stopwords=STOPWORDS and change the arg below
+#     wordcloud = WordCloud(font_path='/Library/Fonts/Verdana.ttf',
+#                           relative_scaling = 1.0,
+#                           stopwords = {'to', 'of'} # set or space-separated string
+#                           ).generate(text)
+#     plt.imshow(wordcloud)
+#     plt.axis("off")
+#     plt.show()
+#
+# generate_wordcloud(text)

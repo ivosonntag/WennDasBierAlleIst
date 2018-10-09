@@ -12,20 +12,21 @@ logger = logging.getLogger("data-frame")
 
 class DataFrame(DataStorage):
 
-    def __init__(self, hashtag, config):
+    def __init__(self, config):
         # in python calling base init method is optional
-        self._set_data(hashtag, config)
+        self._set_data(config)
         self._df_fom_file = None
         self._batch_df = None
-        self.buffer_size= config.getint('MAIN', 'df_buffer_size')
+        self.path_to_file = None
+        self.buffer_size = config.getint('MAIN', 'df_buffer_size')
 
+    def save(self, data, hashtag):
         date_time = time.strftime("%Y-%m-%d")
         file_name = date_time + "_" + hashtag + ".pkl"
-        dir_name = os.path.join(os.path.dirname(os.path.dirname(__file__)), config.get('MAIN', 'path_to_data'))
+        dir_name = os.path.join(os.path.dirname(os.path.dirname(__file__)), self._path)
         self.path_to_file = dir_name + file_name
-
-    def save(self, data):
         # create data frame form tweet data dict
+
         temp_df = pd.DataFrame([data])
         # check if there is a batch data frame already
         if self._batch_df is None:

@@ -63,7 +63,7 @@ if __name__ == '__main__':
     config = configparser.ConfigParser()
     config.read('config.ini')
     path_to_data = config.get('MAIN', 'path_to_data')
-    db_name = config.get('MAIN', 'db_name')
+    db_name = config.get('SQL', 'db_name')
     batch_size = config.getint('DELETION', 'batch_size')
     log_level = config.get('MAIN', 'log_level')
     file_name = config.get('DELETION', 'file_name')
