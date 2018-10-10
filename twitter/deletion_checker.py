@@ -17,7 +17,7 @@ def get_tweet_ids_from_db(database):
     conn = create_db_connection(database)
 
     cur = conn.cursor()
-    cur.execute("SELECT id_str, created_at FROM AFD_0 ORDER BY id_str")
+    cur.execute("SELECT id_str, created_at FROM all_tweets where deleted = 'False' ORDER BY id_str")
     tweet_ids = cur.fetchall()
 
     list_of_ids = [i for i in tweet_ids]
@@ -52,7 +52,7 @@ def create_status_tweet_list(data):
     for tweet in data:
         one_tweet = dict()
         one_tweet["tweet_id"] = tweet[0]
-        one_tweet["last_seen"] = convert_twitter_time(tweet[1])
+        one_tweet["last_seen"] = tweet[1]
         one_tweet["status"] = "online"
         tweets_id_date_list.append(one_tweet)
     return tweets_id_date_list
@@ -79,6 +79,7 @@ if __name__ == '__main__':
     # get 'tweet_id's and 'created_at' attribute
     path_to_db = os.path.join(path_to_data, db_name)
     # following line returns a huge list. Slice it for testing purpose
+    # TODO: Go iteratively through sql db and not receive all at once
     all_tweet_ids_date = get_tweet_ids_from_db(path_to_db)  # [:10]  # uncomment for slicing
 
     # generate a list based on the info stored in the db, containing a dict per tweet,

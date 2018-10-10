@@ -58,22 +58,6 @@ def format_tweet_data(tweet):
     return tweet_info
 
 
-def filter_data(tweet, include_data, user_attributes):
-    filtered_data = dict()
-    for attribute in include_data:
-        if attribute == 'user':
-
-            user = dict()
-            for user_attribute in user_attributes:
-                user[user_attribute] = tweet['user'][user_attribute]
-            filtered_data['user'] = user
-        elif attribute == 'created_at':
-            filtered_data[attribute] = convert_twitter_time(tweet[attribute])
-        else:
-            filtered_data[attribute] = tweet[attribute]
-    return filtered_data
-
-
 def get_hashtag_of_tweet(tweet_info):
     # since there is no function in MyListener for getting which hashtag triggered
     # the callback function, we have to look for it manually, therefore we count the occurrences

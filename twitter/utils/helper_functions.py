@@ -106,6 +106,7 @@ def get_time():
 
 
 def convert_twitter_time(twitter_time):
+    # converts ms in readable format
     in_seconds = time.mktime(time.strptime(twitter_time, "%a %b %d %H:%M:%S +0000 %Y"))
     return str(datetime.datetime.fromtimestamp(in_seconds))
 

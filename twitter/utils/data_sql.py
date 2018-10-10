@@ -16,7 +16,9 @@ class DataSQL(DataStorage):
     def save(self, data, table_name):
         if not self._store_together:
             self.__table_name = table_name
-        self.__dict2sql.save(data, table_name, True, True)
+
+        data['deleted'] = False
+        self.__dict2sql.save(data, self.__table_name, True, True)
 
     def get_info(self):
         tmp_str = "Database: " + self._path_to_file

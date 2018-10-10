@@ -9,7 +9,7 @@ class DataStorage(object, metaclass=abc.ABCMeta):
     def __init__(self, config, filename):
         self._path = config.get('MAIN', 'path_to_data')
         self._path_to_file = self._path + filename
-        self._store_together = bool(config.getboolean('MAIN', 'store_together'))
+        self._store_together = config.getboolean('MAIN', 'store_together')
 
     @abc.abstractmethod
     def save(self, data, hashtag):
