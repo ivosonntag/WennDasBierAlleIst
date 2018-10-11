@@ -13,7 +13,6 @@ class Dict2Sql(object):
         table_name = self.__check_if_table_with_same_name_and_columns_exists(dictionary, table_name, auto_create)
         if table_name == -1:
             raise Exception("Table with same name but different columns already exists. Couldn't create a new table.")
-            return
 
         # create table if table with same name doesn't exists
         self.__create_table(table_name, dictionary)
@@ -30,12 +29,7 @@ class Dict2Sql(object):
             query += ") values ("
 
             for key in [*dictionary]:
-                if type(dictionary[key]) is str:
-                    tmp = "%r"%dictionary[key]
-                    # in sqlite single quotes have to be replaced by double quotes
-                    tmp = tmp.replace(r"\'", r"''")
-                else:
-                    tmp = "'" + str(dictionary[key]) + "'"
+                tmp = self.__format_string_sql_friendly(dictionary[key])
                 query += "{},".format(tmp)
 
             # get rid of the last comma
@@ -43,11 +37,75 @@ class Dict2Sql(object):
             query += ")"
             con.execute(query)
 
-        """ Example_
-        query = "insert into {} (ID, Text, Sentiment, DateTime)" \
-                "values ({}, {}, {}, {})".format(self.hashtag, data['tweet_id'],
-                raw_text, data['sentiment'], "%r"%(time.strftime("%Y-%m-%d_%H:%M:%S")))
-        """
+    def update_with_string_filter(self, values_to_set, table_name, filter_string):
+        con = sqlite3.connect(self.__path_to_db)
+
+        query = "UPDATE {} SET ".format(table_name)
+        for key in [*values_to_set]:
+            tmp = self.__format_string_sql_friendly(values_to_set[key])
+            query += "{} = {},".format(key, tmp)
+
+        # get rid of the last comma
+        query = query[:-1]
+        query += "where {}".format(filter_string)
+
+        with con:
+            con.execute(query)
+
+    def update_with_dict_filter(self, values_to_set, table_name, filter_dict, logic_and=True):
+        if logic_and:
+            logic = "AND"
+        else:
+            logic = "OR"
+
+        filter_string = ""
+        for key in [*filter_dict]:
+            value_string = self.__format_string_sql_friendly(filter_dict[key])
+            filter_string += "{} = {}".format(key, value_string)
+            filter_string += logic + " "
+
+        # get rid of the last OR or AND
+        # if OR then the last space char also will be deleted
+        filter_string = filter_string[:-(len(logic)+1)]
+        self.update_with_string_filter(values_to_set, table_name, filter_string)
+
+    def get_all_data_with_string_filter(self, table_name, columns="*", filter_string=""):
+        con = sqlite3.connect(self.__path_to_db)
+
+        if isinstance(columns, str):
+            pass
+        elif isinstance(columns, list) or isinstance(columns, set):
+            tmp = ""
+            for column in columns:
+                tmp += "{}, ".format(column)
+            columns = tmp[:-2]
+
+        if filter_string != "":
+            filter_string = "WHERE " + filter_string
+
+        else:
+            raise Exception("columns has to be string, list or set")
+
+        with con:
+            return con.execute("SELECT {} FROM {} {}".format(columns, table_name, filter_string)).fetchall()
+
+    def get_all_data_with_dict_filter(self, table_name,  columns="*", filter_dict=None, logic_and=True):
+        if logic_and:
+            logic = "AND"
+        else:
+            logic = "OR"
+
+        filter_string = ""
+        if filter_dict is not None:
+            for key in [*filter_dict]:
+                value_string = self.__format_string_sql_friendly(filter_dict[key])
+                filter_string += "{} = {} ".format(key, value_string)
+                filter_string += logic + " "
+
+        # get rid of the last OR or AND
+        # if OR then the last space char also will be deleted
+        filter_string = filter_string[:-(len(logic) + 1)]
+        return self.get_all_data_with_string_filter(table_name, columns, filter_string)
 
     def __create_table(self, table_name, dictionary):
         # table doesn't get created if a table with the same name already exists
@@ -95,7 +153,7 @@ class Dict2Sql(object):
                                 nr = max(nr, tmp_nr + 1)
                             else:
                                 # if the table name is not like "table_Nr"
-                                nr = max(nr, 0)
+                                nr = 1
 
                         else:
                             # if no auto create -> return -1
@@ -104,6 +162,15 @@ class Dict2Sql(object):
             if nr != 0:
                 table_name = table_name + "_" + str(nr)
             return table_name
+
+    def __format_string_sql_friendly(self, string_to_format):
+        if type(string_to_format) is str:
+            tmp = "%r" % string_to_format
+            # in sqlite single quotes have to be replaced by double quotes
+            tmp = tmp.replace(r"\'", r"''")
+        else:
+            tmp = "'" + str(string_to_format) + "'"
+        return tmp
 
     def __format_dictionary(self, dictionary, auto_flatten):
         # checks data of dictionary for nested lists, array or dictionaries
