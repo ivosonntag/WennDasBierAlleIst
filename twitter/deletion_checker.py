@@ -1,41 +1,44 @@
+import time
+import datetime
 import os
 import configparser
 
 import tweepy
 
+from utils.data_storage import StorageFactory
 from utils.helper_functions import authenticate,\
     create_db_connection,\
     get_time,\
-    build_logger,\
-    convert_twitter_time,\
-    save_as_json_file, \
-    load_json,\
-    update_data_file
+    build_logger
+
+from tweet_streamer import format_tweet_data
 
 
 def get_tweet_ids_from_db(database):
     conn = create_db_connection(database)
 
     cur = conn.cursor()
-    cur.execute("SELECT id_str, created_at FROM all_tweets where deleted = 'False' ORDER BY id_str")
+    cur.execute("SELECT id_str FROM all_tweets where deleted = 'False' ORDER BY id_str")
     tweet_ids = cur.fetchall()
 
-    list_of_ids = [i for i in tweet_ids]
+    list_of_ids = [i[0] for i in tweet_ids]
     return list_of_ids
 
 
-def find_offline_ids(list_of_ids_to_check):
+def check_deletion(list_of_ids_to_check):
     try:
         list_of_all_online_tweets = api.statuses_lookup(list_of_ids_to_check)
-        still_online_ids = []
-        for tweet in list_of_all_online_tweets:
-            online_id = tweet._json['id']
-            still_online_ids.append(online_id)
+        still_online_data = []
         offline_ids = []
+        for tweet in list_of_all_online_tweets:
+            formatted_online_data = format_tweet_data(tweet, tweet_attributes, user_attributes)
+            formatted_online_data['last_seen'] = get_time()
+            still_online_data.append(formatted_online_data)
+        online_ids = [id_str['id_str'] for id_str in still_online_data]
         for each_id in list_of_ids_to_check:
-            if int(each_id) not in still_online_ids:
+            if each_id not in online_ids:
                 offline_ids.append(each_id)
-        return offline_ids
+        return offline_ids, still_online_data
     except Exception as e:
         logger.error("got Exception while statuses_lookup: {}".format(e), exc_info=True)
         return None
@@ -67,66 +70,53 @@ if __name__ == '__main__':
     batch_size = config.getint('DELETION', 'batch_size')
     log_level = config.get('MAIN', 'log_level')
     file_name = config.get('DELETION', 'file_name')
+    interval = config.getint('DELETION', 'checking_interval')
+    tweet_attributes = config.get("DELETION", "include_attributes").split(', ')
+    user_attributes = config.get("DELETION", "user_attributes").split(', ')
     full_path_to_file = os.path.join(path_to_data, file_name)
 
     # build logger
     logger = build_logger("deletion-checker", log_level)
 
-    # authenticate with twitter api
-    auth = authenticate()
-    api = tweepy.API(auth)
+    storage = StorageFactory.create(config)
 
-    # get 'tweet_id's and 'created_at' attribute
-    path_to_db = os.path.join(path_to_data, db_name)
-    # following line returns a huge list. Slice it for testing purpose
-    # TODO: Go iteratively through sql db and not receive all at once
-    all_tweet_ids_date = get_tweet_ids_from_db(path_to_db)  # [:10]  # uncomment for slicing
+    while True:
 
-    # generate a list based on the info stored in the db, containing a dict per tweet,
-    # dict contains tweet_id, last_seen (=date) and status (=online,offline)
-    status_tweet_list = create_status_tweet_list(all_tweet_ids_date)
+        # authenticate with twitter api
+        auth = authenticate()
+        api = tweepy.API(auth)
 
-    # get only the ids of the
-    all_ids = [i[0] for i in all_tweet_ids_date]
+        # get 'tweet_id's and 'created_at' attribute
+        path_to_db = os.path.join(path_to_data, db_name)
+        logger.info("checking deleted tweets of: {}".format(path_to_db))
 
-    # following loop checks status of batches of 100 tweets
-    remainder = True
-    while remainder:
-        logger.info("number of remaining tweet to check: {}".format(len(all_ids)))
+        # following line returns a huge list. Slice it for testing purpose
+        # TODO: Go iteratively through sql db and not receive all at once
+        all_tweet_ids = get_tweet_ids_from_db(path_to_db)  # [:1000]  # uncomment for slicing
 
-        # slice data into 2 lists: batch of 100 and remainder tweet ids
-        batch, remainder = slice_data_into_batches(batch_size, all_ids)
-        all_ids = remainder
+        # following loop checks status of batches of 100 tweets
+        remainder = True
+        while remainder:
+            logger.debug("number of remaining tweet to check: {}".format(len(all_tweet_ids)))
 
-        # offline_tweets is a list containing ONLY the tweets which are no longer online (=offline)
-        offline_tweets = find_offline_ids(batch)
+            # slice data into 2 lists: batch of 100 and remainder tweet ids
+            batch, remainder = slice_data_into_batches(batch_size, all_tweet_ids)
+            all_tweet_ids = remainder
 
-        logger.info("number of offline tweets found in this batch: {}".format(len(offline_tweets)))
-        logger.debug("offline tweet ids: {}".format(offline_tweets))
+            # offline_tweets is a list containing ONLY the tweets which are no longer online (=offline)
+            offline_tweet_ids, still_online_tweets_data = check_deletion(batch)
 
-        for tweet in status_tweet_list:
-            for deleted_tweet_id in offline_tweets:
-                if tweet["tweet_id"] == deleted_tweet_id:
-                    tweet["status"] = "offline"
-                else:
-                    tweet["last_seen"] = get_time()
-        # once remainder = 0 break loop
+            for online_tweet in still_online_tweets_data:
+                storage.save(online_tweet, "checked_tweets")
 
-    logger.info("done checking status of tweets!")
-    # if there is a data file already:
-    if os.path.isfile(full_path_to_file):
+            # TODO: Check "All_Tweets" table for IDs in offline_tweet_ids and update deleted value to True
 
-        # load data file containing the described list with a dict per tweet (tweet_id, last_seen, status)
-        logger.debug("loading {}".format(full_path_to_file))
-        status_tweet_file = load_json(full_path_to_file)
+            logger.debug("number of offline tweets found in this batch: {}".format(len(offline_tweet_ids)))
+            logger.debug("offline tweet ids: {}".format(offline_tweet_ids))
 
-        # update the loaded file, like:
-        # if id is offline -> update status to offline
-        # if id is still online -> update last_seen to recent date
-        # if id is not in file already, add tweet dict to file
-        logger.info("now updating data into {}".format(full_path_to_file))
-        status_tweet_list = update_data_file(status_tweet_file, status_tweet_list)
-
-    # in the end save the list with dicts to the loaded / new file
-    logger.info("saving data to file: {}".format(full_path_to_file))
-    save_as_json_file(full_path_to_file, status_tweet_list)
+        logger.info("done checking status of tweets! - now waiting for next round...")
+        logger.debug("---------------------------------------------------------------")
+        while datetime.datetime.now().minute % interval != 0:
+            # sleeping
+            # print("sleeping")
+            time.sleep(1)

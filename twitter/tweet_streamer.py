@@ -1,4 +1,5 @@
 import configparser
+from urllib3.exceptions import ProtocolError, ReadTimeoutError
 
 import tweepy
 from tweepy.streaming import StreamListener
@@ -16,7 +17,7 @@ from utils.helper_functions import authenticate,\
 global logger, config
 
 
-def format_tweet_data(tweet):
+def format_tweet_data(tweet, attributes_to_include, user_attributes_to_include):
     sentiment = None
     data = tweet._json
     # added to get the full text if status exceeds 140 characters
@@ -26,16 +27,14 @@ def format_tweet_data(tweet):
         text = data['retweeted_status']['extended_tweet']['full_text']
     else:
         text = data["text"]
-    if "sentiment" in config.get('TWITTER', 'include_data').split(', '):
+    if "sentiment" in attributes_to_include:
         sentiment = determine_vader(text)
     # see https://github.com/ivosonntag/WennDasBierAlleIst/wiki/twitter for different keys
-    desired_attributes = config.get('TWITTER', 'include_data').split(', ')
-    user_attributes = config.get('TWITTER', 'user_attributes').split(', ')
     tweet_info = dict()
-    for attribute in desired_attributes:
+    for attribute in attributes_to_include:
         if attribute == 'user':
             user = dict()
-            for user_attribute in user_attributes:
+            for user_attribute in user_attributes_to_include:
                 # if user_attribute == 'id_str':
                 #    user['user_id_str'] = data['user'][user_attribute]
                 # else:
@@ -95,7 +94,7 @@ class MyListener(StreamListener):
         # only gets called if new status was posted
         # see StreamListener class for different events
         try:
-            tweet_info = format_tweet_data(status)
+            tweet_info = format_tweet_data(status, tweet_attributes, user_attributes)
             hashtag = get_hashtag_of_tweet(tweet_info)
             if hashtag != -1:
                 if console_output:
@@ -126,14 +125,14 @@ if __name__ == '__main__':
     country = config.get('TWITTER', 'country')
     town = config.get('TWITTER', 'town')
     language = config.get('TWITTER', 'language')
-    tweet_data = config.get("TWITTER", "include_data").split(', ')
-    user_data = config.get("TWITTER", "user_attributes").split(', ')
+    tweet_attributes = config.get("TWITTER", "include_attributes").split(', ')
+    user_attributes = config.get("TWITTER", "user_attributes").split(', ')
     log_level = config.get('MAIN', 'log_level')
 
     logger = build_logger('streamer', log_level)
 
-    logger.debug("include data: {}".format(tweet_data))
-    logger.debug("user_attribute: {}".format(user_data))
+    logger.debug("include attributes: {}".format(tweet_attributes))
+    logger.debug("user_attribute: {}".format(user_attributes))
 
     auth = authenticate()
     api = tweepy.API(auth_handler=auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
@@ -151,4 +150,6 @@ if __name__ == '__main__':
         twitter_stream.filter(track=[hashtags], languages=[language])
     except ValueError as e:
         logger.error("failed to access twitter authentication - make sure to export credentials to environment, with "
-                     "exception {}".format(e), exc_info=True)
+                     "exception {}".format(e))
+    except ProtocolError and ReadTimeoutError as e:
+        logger.error("Connection broken: {}".format(e), exc_info=True)
