@@ -79,12 +79,12 @@ class Dict2Sql(object):
             for column in columns:
                 tmp += "{}, ".format(column)
             columns = tmp[:-2]
-
-        if filter_string != "":
-            filter_string = "WHERE " + filter_string
-
         else:
             raise Exception("columns has to be string, list or set")
+
+        if columns == "":
+            filter_string = "*"
+        filter_string = "WHERE " + filter_string
 
         with con:
             return con.execute("SELECT {} FROM {} {}".format(columns, table_name, filter_string)).fetchall()

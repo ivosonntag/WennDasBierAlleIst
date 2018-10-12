@@ -34,6 +34,7 @@ class TestInsertData(TestCreateDB):
             self.sql_db.save(data, self.table_name, False, False)
 
     def test_insert_data_with_different_columns_without_auto_create(self):
+        # Expect an exception
         dict1 = {"test1": True}
         self.sql_db.save(dict1, self.table_name, False, False)
         dict2 = {"test2": True}
@@ -47,6 +48,7 @@ class TestInsertData(TestCreateDB):
         self.sql_db.save(dict2, self.table_name, True, False)
 
     def test_insert_nested_dict_without_auto_flatten(self):
+        # Expect an exception
         dict1 = {"test1": True}
         self.sql_db.save(dict1, self.table_name, False, False)
         dict2 = {"test1": dict1}

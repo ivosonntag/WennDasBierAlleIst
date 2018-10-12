@@ -112,7 +112,8 @@ if __name__ == '__main__':
                 sql_db.save(online_tweet, "checked_tweets", True, True)
 
             for offline_id in offline_tweet_ids:
-                filter_dict = set_values = dict()
+                filter_dict = dict()
+                set_values = dict()
                 filter_dict['id_str'] = offline_id
                 set_values['deleted'] = True
                 logger.debug("setting deleted to True for id: {}".format(offline_id))
