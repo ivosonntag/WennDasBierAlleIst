@@ -1,7 +1,7 @@
 
 def logging_dict(logging_level):
     # decide whether logging parameters are default or not
-    format_console = "%(asctime)s - %(name)s - %(levelname)s - [thread:%(threadName)s] - %(message)s"
+    format_console = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     log_dict = {
         'version': 1,
         'disable_existing_loggers': False,   # set True to suppress existing loggers from other modules

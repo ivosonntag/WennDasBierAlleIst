@@ -27,7 +27,8 @@ class Analyzer(object):
         self.special_characters = ['!', ':', ',', '?', '.', ';', '´', '`', '´´', '``', '"', "'", '”', '(', ')', '–',
                                    '—', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p',
                                    'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'rt', '’', '‘', '“', '-', '*', '&', '/',
-                                   '#', '%', '\\', '\\\\', '...', '+', '„', '➡', ':/', 'au', 'al', 'ab', 'un', 'be']
+                                   '#', '%', '\\', '\\\\', '...', '+', '„', '➡', ':/', 'au', 'al', 'ab', 'un', 'be',
+                                   'wa', 'de', 'bi']
         log_level = config.get('MAIN', 'log_level')
         global logger
         logger = build_logger('analyzer', log_level)

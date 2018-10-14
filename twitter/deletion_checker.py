@@ -89,7 +89,7 @@ if __name__ == '__main__':
 
         # authenticate with twitter api
         auth = authenticate()
-        api = tweepy.API(auth)
+        api = tweepy.API(auth_handler=auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
 
         # get 'tweet_id's and 'created_at' attribute
         logger.info("checking deleted tweets of: {}".format(path_to_db))
