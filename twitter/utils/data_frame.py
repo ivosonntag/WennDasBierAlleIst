@@ -13,8 +13,12 @@ logger = logging.getLogger("data-frame")
 class DataFrame(DataStorage):
 
     def __init__(self, config):
+        file_name = ""
+        if config.getboolean('MAIN', 'store_together'):
+            file_name = 'All_Tweets.json'
+        super().__init__(config, file_name)
         # in python calling base init method is optional
-        self._set_data(config)
+        # self._set_data(config)
         self._df_fom_file = None
         self._batch_df = None
         self.path_to_file = None
@@ -47,7 +51,6 @@ class DataFrame(DataStorage):
             else:
                 pd.to_pickle(self._batch_df, self.path_to_file)
             self._batch_df = temp_df = None
-
 
     def get_info(self):
         return self.path_to_file

@@ -1,5 +1,7 @@
 import sqlite3
 
+import pandas as pd
+
 
 class Dict2Sql(object):
     def __init__(self, path_to_db):
@@ -69,7 +71,7 @@ class Dict2Sql(object):
         filter_string = filter_string[:-(len(logic)+1)]
         self.update_with_string_filter(values_to_set, table_name, filter_string)
 
-    def get_all_data_with_string_filter(self, table_name, columns="*", filter_string=""):
+    def get_all_data_with_string_filter(self, table_name, columns="*", filter_string="", as_data_frame=False):
         con = sqlite3.connect(self.__path_to_db)
 
         if isinstance(columns, str):
@@ -84,10 +86,14 @@ class Dict2Sql(object):
 
         if columns == "":
             filter_string = "*"
-        filter_string = "WHERE " + filter_string
+            filter_string = "WHERE " + filter_string
 
+        query = "SELECT {} FROM {} {}".format(columns, table_name, filter_string)
         with con:
-            return con.execute("SELECT {} FROM {} {}".format(columns, table_name, filter_string)).fetchall()
+            if as_data_frame:
+                return pd.read_sql_query(query, con)
+            else:
+                return con.execute(query).fetchall()
 
     def get_all_data_with_dict_filter(self, table_name,  columns="*", filter_dict=None, logic_and=True):
         if logic_and:

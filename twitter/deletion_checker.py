@@ -19,7 +19,8 @@ def get_tweet_ids_from_db(database):
     conn = create_db_connection(database)
 
     cur = conn.cursor()
-    cur.execute("SELECT id_str FROM all_tweets where deleted = 'False' ORDER BY id_str")
+    query = "SELECT id_str FROM All_Tweets where deleted = 'False' ORDER BY id_str"
+    cur.execute(query)
     tweet_ids = cur.fetchall()
 
     list_of_ids = [i[0] for i in tweet_ids]
@@ -76,6 +77,7 @@ if __name__ == '__main__':
     user_attributes = config.get("DELETION", "user_attributes").split(', ')
     full_path_to_file = os.path.join(path_to_data, file_name)
     path_to_db = os.path.join(path_to_data, db_name)
+    store_together = config.getboolean('MAIN', 'store_together')
 
     # build logger
     logger = build_logger("deletion-checker", log_level)
@@ -120,7 +122,7 @@ if __name__ == '__main__':
                 sql_db.update_with_dict_filter(set_values, "All_Tweets", filter_dict)
 
             logger.debug("number of offline tweets found in this batch: {}".format(len(offline_tweet_ids)))
-            logger.debug("offline tweet ids: {}".format(offline_tweet_ids))
+            logger.info("offline tweet ids: {}".format(offline_tweet_ids))
 
         logger.info("done checking status of tweets! - now waiting for next round...")
         logger.debug("--------------------------------------------------------------")

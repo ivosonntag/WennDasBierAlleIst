@@ -1,5 +1,6 @@
 import configparser
 from urllib3.exceptions import ProtocolError, ReadTimeoutError
+from http.client import IncompleteRead
 
 import tweepy
 from tweepy.streaming import StreamListener
@@ -151,5 +152,5 @@ if __name__ == '__main__':
     except ValueError as e:
         logger.error("failed to access twitter authentication - make sure to export credentials to environment, with "
                      "exception {}".format(e))
-    except ProtocolError and ReadTimeoutError as e:
+    except ProtocolError or ReadTimeoutError or IncompleteRead as e:
         logger.error("Connection broken: {}".format(e), exc_info=True)
