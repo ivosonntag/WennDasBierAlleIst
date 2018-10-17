@@ -52,22 +52,29 @@ class Analyzer(object):
         all_words = []
         filtered_list = []
 
+        count_data = len(data)
         for index, row in data.iterrows():
+            print('{} index of {}'.format(int(index)+1, count_data), end="\r")
             all_words.append([wnl.lemmatize(i, j[0].lower()) if j[0].lower() in ['a', 'n', 'v'] else wnl.lemmatize(i)
                               for i, j in pos_tag(tknzr.tokenize(row['text'].replace("\\n", " ").replace("'s", "")))])
 
+        logger.debug("removing unwanted words")
         for sublist in all_words:
             for item in sublist:
                 filtered_list.append(item)
         if remove_stopwords:
+            logger.debug("removing stopwords")
             filtered_list = [word for word in filtered_list if word.lower() not in
                              stopwords.words(language_map[language])]
         if remove_special_characters:
+            logger.debug("removing spec chars")
             filtered_list = [word for word in filtered_list if word.lower() not in
                              self.special_characters]
         if remove_urls:
+            logger.debug("removing urls")
             filtered_list = [word for word in filtered_list if not word.startswith('http')]
         if skip_hashtags:
+            logger.debug("removing hashtags")
             filtered_list = [word for word in filtered_list if word.lower() not in
                              [hashtag.lower() for hashtag in self.hashtags_list]]
         return filtered_list
@@ -90,17 +97,22 @@ class Analyzer(object):
         plt.xticks(rotation=85)
         if save_plot_file_name:
             plt.savefig(self.path_to_plots + str(get_time()) + str(self.file_name) + '.png')
-        plt.show()
+        # plt.show()
 
 
 if __name__ == '__main__':
     file_to_analyze = "Trump.sqlite"
     analyze = Analyzer()
-    df = analyze.get_sql_data(columns="text")
+    logger.debug("loading data")
+    df = analyze.get_sql_data(columns="text", filter_string="deleted='True'")
+    
+    logger.debug("analyzing data")
     tokenized_data = analyze.tokenize_lemmatize(df,
                                                 remove_stopwords=True,
                                                 remove_special_characters=True,
                                                 remove_urls=True,
                                                 skip_hashtags=True)
+    logger.debug("counting words")
     word_counts = analyze.count_words(tokenized_data)
+    logger.debug("plottting bar chart")
     analyze.plot_bar_diagram_from_dict(word_counts, save_plot_file_name=True)

@@ -85,7 +85,8 @@ class Dict2Sql(object):
             raise Exception("columns has to be string, list or set")
 
         if columns == "":
-            filter_string = "*"
+            columns = "*"
+        if filter_string != "":
             filter_string = "WHERE " + filter_string
 
         query = "SELECT {} FROM {} {}".format(columns, table_name, filter_string)

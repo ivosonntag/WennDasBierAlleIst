@@ -124,7 +124,7 @@ if __name__ == '__main__':
             logger.debug("number of offline tweets found in this batch: {}".format(len(offline_tweet_ids)))
             logger.info("offline tweet ids: {}".format(offline_tweet_ids))
 
-        logger.info("done checking status of tweets! - now waiting for next round...")
+        logger.info("done! - now waiting for next round!")
         logger.debug("--------------------------------------------------------------")
         while datetime.datetime.now().minute % interval != 0:
             # sleeping
